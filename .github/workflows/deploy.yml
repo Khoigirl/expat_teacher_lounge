@@ -9,7 +9,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     
-    # Required permissions for accessing secrets
     permissions:
       contents: read
       
@@ -33,7 +32,7 @@ jobs:
       - name: Upload files to S3
         run: |
           echo "Uploading files to S3..."
-          aws s3 sync website/ s3://${{ secrets.AWS_S3_BUCKET }}/ --delete
+          aws s3 sync "Expat Teacher's Lounge Website/" s3://${{ secrets.AWS_S3_BUCKET }}/ --delete
           
       - name: Display success message
         run: |
