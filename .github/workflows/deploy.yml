@@ -1,4 +1,4 @@
-name: Deploy Portfolio to S3
+name: Debug S3 Structure
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  debug:
     runs-on: ubuntu-latest
     
     permissions:
@@ -16,6 +16,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Check local file structure
+        run: |
+          echo "=== Repository root ==="
+          ls -la
+          echo ""
+          echo "=== Expat Teacher's Lounge Website folder ==="
+          ls -la "Expat Teacher's Lounge Website/"
+          echo ""
+          echo "=== Looking for index.html specifically ==="
+          find . -name "index.html" -type f
+      
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -23,19 +34,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
       
-      - name: Test AWS connection
+      - name: Check current S3 bucket contents
         run: |
-          echo "Testing AWS connection..."
-          aws sts get-caller-identity
-          aws s3 ls s3://${{ secrets.AWS_S3_BUCKET }}/ || echo "Bucket exists but might be empty"
+          echo "=== Current S3 bucket structure ==="
+          aws s3 ls s3://${{ secrets.AWS_S3_BUCKET }}/ --recursive
+          echo ""
+          echo "=== Looking for index.html in S3 ==="
+          aws s3 ls s3://${{ secrets.AWS_S3_BUCKET }}/index.html || echo "index.html not found at root"
       
-      - name: Upload files to S3
+      - name: Upload with verbose logging
         run: |
-          echo "Uploading files to S3..."
-          aws s3 sync "Expat Teacher's Lounge Website/" s3://${{ secrets.AWS_S3_BUCKET }}/ --delete
-          
-      - name: Display success message
+          echo "=== Uploading with detailed logging ==="
+          aws s3 sync "Expat Teacher's Lounge Website/" s3://${{ secrets.AWS_S3_BUCKET }}/ --delete --debug
+      
+      - name: Verify upload
         run: |
-          echo "✅ Files successfully uploaded to S3!"
-          echo "🌐 Your website should be available at:"
-          echo "https://${{ secrets.AWS_S3_BUCKET }}.s3-website.eu-north-1.amazonaws.com"
+          echo "=== Final S3 bucket structure ==="
+          aws s3 ls s3://${{ secrets.AWS_S3_BUCKET }}/ --recursive
